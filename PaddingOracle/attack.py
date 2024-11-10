@@ -47,6 +47,18 @@ None
 
 This is the meat of the attack were we preform each round to decrpyt each byte. This function goes byte by byte and block by block
 It changes the byte one by one until it gets the correct error code response, it then saves that byte and calculates the decrypted byte
+
+The Padding oracle attack works by using three bytes of information from how CBC mode works, CBC mode works by taking a byte encrypting it
+with AES and getting an encrypted byte out, it then takes the corresponding byte from the previous block and xor them together to get the 
+final encypted byte. The padding oracle attack using the error messages of correct padding or incorrect MAC to determine what the pervious 
+blocks byte needs to be so that when xored with the encypted byte it equals proper padding which gives us the answer.
+Ex. for the last byte if we get a MAC error we know the padding is correct and hence 
+the output must be 0x01, we know what the pervious block byte was changed to and since in XOR , a xor b = c then b xor c = a we can calculate the encypted byte
+by xoring the byte we changed the pervious block byte to with 0x01. THis gives us the encypted byte
+with this we can get the unencypted message byte by xor the encypted byte with the original pervios block byte.
+
+With that in mind this code goes through each block and byte trying each hexdigit in a spot until we get a MAC error, with that we calculate
+the unencypted byte.
 '''
 def padding_attack(encrypt_message,client_socket):
     #Changing the encypted message into a list of the bytes this is for ease of change the bytes and know correct indexes
