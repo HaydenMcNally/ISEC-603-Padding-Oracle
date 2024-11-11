@@ -43,8 +43,6 @@ def process_packet(pkt):
         # Write the packet to the file
         scapy.wrpcap(pcap_file_name, [scapy_pkt])
 
-        print("Saving packet to {0}".format(pcap_file_name))
-
     packetstatus = False #Variable used to check if we're drop or accepted the packet already
 
     cap = pyshark.FileCapture(pcap_file_name) #Reading out the packet in pyshark
@@ -57,7 +55,7 @@ def process_packet(pkt):
             print("Source IP: {0}".format(packet.ip.src))
             print("Destination IP: {0}".format(packet.ip.dst))
             print("Protocol: {0}".format(packet.transport_layer))
-            
+            tls_data = packet.tls._all_fields
             #Content type 22 is tls handshake so we here looking for Server Hello handshake packets
             if packet.tls.record_content_type == "22":
                 print("HandShake Packet")
@@ -81,8 +79,8 @@ def process_packet(pkt):
             if packet.tls.record_content_type == "23":
 
                 packetS = IP(pkt.get_payload()) #This is were scapy doesn't handle TLS well we get the IP layer of the packet and get the tls info from it's payload we also need this packet to create a new one
-
-                payload = IP_scapy_pkt[Raw].load #Getting the TLS layer in bytes
+                TLS_scapy_pkt = TLS(pkt.get_payload())
+                payload = TLS_scapy_pkt[Raw].load #Getting the TLS layer in bytes
                 print("Payload")
                 print(payload.hex()) #Printing out TLS packet this will include headers and the TCP layer
                 payloadArray = bytearray(payload) 

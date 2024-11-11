@@ -6,24 +6,23 @@ from cryptography.hazmat.primitives import padding
 import os
 import hmac
 import hashlib
-from Crypto.Cipher import AES
 
 """
 This is code for the oracle or in the case of the attack the server fills this role.
 Essentially the oracle will take the incoming message and determine if the padding is correct or not.
 It does this by taking off the padding and then if the padding is correct it checks the MAC of the message.
-This code is more or less a simplified example of how TLS decodes and encodes messages though very loosely.
+This code is more or less a simplified example of how TLS decodes and encodes messages.
 """
 
 """
 create_mac function
 Takes 
-key - key used to create the mac
-message - message to be mac
+key - key used to create the MAC
+message - message to be MAC'd
 Returns
-mac - the mac of the message
+mac - the MAC of the message
 
-This code is very straight forward just take the message and key and use hmac library to mac the message
+Takes the message and key and use hmac library to MAC the message
 """
 
 def create_mac(key, message):
@@ -38,14 +37,14 @@ def create_mac(key, message):
 """
 verfiy_mac function
 Takes 
-key - key used to create the mac
-message - message to be mac
-mac - the mac to check 
+key - key used to create the MAC
+message - message to be MAC'd
+mac - the MAC to check 
 Returns
-True if the mac match for this message
-False if the mac does not match
+True if the MAC matches for this message
+False if the MAC does not match
 
-This code is very straight forward just take the message and key recreating the mac and checking if it matches
+Takes the message and key recreating the MAC and checking if it matches
 """
 
 def verify_mac(key, message, mac):
@@ -62,9 +61,9 @@ Takes
 key - key used for encryption
 message - message to be encypted
 Returns
-iv+encypted - this is the iv used for encrypted concat with the encyption output
+iv+encypted - this is the iv used for encrypted concated with the encyption output
 
-This code is very straight forward just forward, we create random iv create the cipher opject using AES CBC then we create out padder and pad our message
+We create random iv, create the cipher object using AES CBC then we create our padder and pad our message
 then we run the message through the encyptor returning the result
 """
 
@@ -91,13 +90,13 @@ def encrypt(key,message):
 """
 decrypt function
 Takes 
-key - key used for encryption
-message - message to be encypted
+key - key used for decryption
+message - message to be decypted
 message_mac - MAC code for the message
 Returns
 Message - this returns a string based on how decryption went, the three options are invalid padding (For padding errors), invalid MAC (For when the mac doesn't match), and successful decrpytion
 
-Here we go through the oposite of the encrypt function but we need to catch any padding errors and return those for the oracle, and after decrpytion we need to verfiy the MAC.
+We perform the oposite of the encrypt function but we need to catch any padding errors and return those for the oracle, and after decrpytion we need to verfiy the MAC.
 """
 
 def decrypt(key, message,message_mac):    
@@ -117,10 +116,10 @@ def decrypt(key, message,message_mac):
         unpadder = padding.PKCS7(algorithms.AES.block_size).unpadder()
         plain_text = unpadder.update(padded_plaintext) + unpadder.finalize()
     except:
-        #Catch any errors and return a message saying invalid padding 
-        #This is useful for the attack as this tells the attack that the padding was incorrect and the byte their testing is incorrect
+        #Catch any errors and return a message saying "invalid padding" 
+        #This is useful for the attack as this tells the attacker that the padding was incorrect and the byte they're testing is incorrect
         return "Invalid Padding"
-    #Verifing the MAC, we do this as if the attack gets the correct byte and the padding is successful the decrpytion will work but won't give the orginial plaintext hence we need to check the MAC
+    #Verifing the MAC, we do this when the attacker gets the correct byte and the padding is successful the decrpytion will work but won't give the orginial plaintext hence we need to check the MAC
     if verify_mac(key,plain_text,message_mac):
 
         return "Message Decoded"
@@ -136,6 +135,7 @@ def main():
     #Creating a rondom key and getting the message and creating the MAC and encyption of message
     key = os.urandom(32)
     message = input("Please enter message for Attack to decrypt:\n")
+    message = message.encode()
     message_mac = create_mac(key,message)
     encrypted_message = encrypt(key,message)
 
