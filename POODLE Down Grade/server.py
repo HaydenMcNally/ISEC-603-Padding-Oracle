@@ -12,7 +12,7 @@ port - port number of socket
 cerfile - cerfitiacte file for ssl socket
 keyfile - private key for the certificate
 
-This function is creates a socket and then accepts clients doing a short communitcation with them, thing to note is that is support TLSv1
+This function is used to create a socket and then accepts clients doing a short communitcation with them, thing to note is that is support TLSv1
 '''
 def create_ssl_server(host, port, certfile, keyfile):
     # Create a standard socket

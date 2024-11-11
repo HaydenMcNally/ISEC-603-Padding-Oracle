@@ -3,7 +3,7 @@
 
 # Padding Oracle Demo
 
-Needed libraries \n
+Needed libraries
 pip install cryptography
 
 This demo showcases how the cryptography of the Padding Oracle attack works.

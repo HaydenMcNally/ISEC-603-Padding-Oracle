@@ -10,7 +10,7 @@ host - host IP address
 port - port number of socket
 
 
-This function is creates a socket and then tries to connect to a server doing a short communitcation with them, thing to note is that the client will try the connection and if it fails fall back to TLSv1
+This function is used to create a socket and then tries to connect to a server doing a short communitcation with them, thing to note is that the client will try the connection and if it fails fall back to TLSv1
 '''
 
 def create_ssl_client(host, port):
@@ -43,7 +43,6 @@ def create_ssl_client(host, port):
         new_client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #New client socket to wrap
         ssl_socket_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1) #Setting the tls version
         ssl_socket_context.options &= ~ssl.OP_NO_TLSv1 # Enabling TLSv1
-        #ssl_socket_context.check_hostname = False
         ssl_socket_context.set_ciphers('AES128-SHA') #Setting the cipher to AES 128 CBC as this is the cipher vulnerably to the Padding Oracle attack
         ssl_socket = ssl_socket_context.wrap_socket(new_client_socket, server_side=False) #Wrap our original socket with TLS
         ssl_socket.connect((host, port))

