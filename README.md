@@ -3,7 +3,7 @@
 
 # Padding Oracle Demo
 
-Needed Libraries
+Needed libraries \n
 pip install cryptography
 
 This demo showcases how the cryptography of the Padding Oracle attack works.
@@ -83,12 +83,15 @@ openssl_conf = openssl_init
 And add these lines at the end:
 
 \[openssl_init\]
+
 ssl_conf = ssl_sect
 
 \[ssl_sect\]
+
 system_default = system_default_sect
 
 \[system_default_sect\]
+
 CipherString = DEFAULT@SECLEVEL=0
 
 
@@ -112,13 +115,16 @@ openssl_conf = openssl_init
 
 And add these lines at the end:
 
-\[openssl_init\]
+\[openssl_init\]\n
+
 ssl_conf = ssl_sect
 
-\[ssl_sect\]
+\[ssl_sect\]\n
+
 system_default = system_default_sect
 
-\[system_default_sect\]
+\[system_default_sect\] 
+
 CipherString = DEFAULT@SECLEVEL=0
 
 
